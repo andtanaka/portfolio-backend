@@ -92,10 +92,15 @@ const updateDraftPost = asyncHandler(async (req, res) => {
   });
   const nameExists = await DraftPost.findOne({ name });
 
-  if (nameExists & (nameExists._id !== draftPost.__id)) {
-    //se o nome existir e não for do mesmmo _id
-    res.status(400);
-    throw new Error('Esse título já existe');
+  if (nameExists) {
+    if (nameExists._id.toString() == draftPost._id.toString()) {
+      res.status(400);
+      throw new Error('O título não foi alterado');
+    } else {
+      //se o nome existir e não for do mesmmo _id
+      res.status(400);
+      throw new Error('Esse título já existe');
+    }
   }
 
   if (draftPost) {
@@ -172,6 +177,7 @@ export {
   getDraftsPosts,
   createDraftPost,
   updateDraftPost,
+  updateTitleDraftPost,
   deleteDraftPost,
   getDraftPostById,
   getDraftPostByName,
