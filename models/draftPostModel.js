@@ -7,7 +7,7 @@ const draftPostSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    subtopics: [{ name: String, id: String }],
+    subtopics: [{ name: String, htmlId: String }],
     tags: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -17,6 +17,7 @@ const draftPostSchema = new mongoose.Schema(
     title: { type: String },
     subtitle: { type: String },
     body: { type: String },
+    htmlBody: { type: String },
     posted: { type: Boolean, default: false, required: true },
   },
   {

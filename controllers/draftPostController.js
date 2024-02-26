@@ -1,6 +1,12 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 import asyncHandler from '../middlewares/async-Handler.js';
 import sortDraftsPosts from '../utils/sortDraftsPosts.js';
 import DraftPost from '../models/draftPostModel.js';
+import { marked } from 'marked'; //markdown to html
+const jsdom = require('jsdom');
+const { JSDOM } = jsdom;
+import { v4 as uuidv4 } from 'uuid';
 
 // @desc Fetch all drafts                      //descrição
 // @route GET /api/post/draft                 //rota
@@ -53,12 +59,33 @@ const createDraftPost = asyncHandler(async (req, res) => {
   return res.status(201).json(createdDraftPost);
 });
 
+const parseSubtopics = (body) => {
+  const subtopics = [];
+  const html = marked.parse(body);
+  const dom = new JSDOM(html);
+
+  dom.window.document.querySelectorAll('h3').forEach((el) => {
+    const htmlId = uuidv4();
+    el.setAttribute('id', htmlId);
+
+    subtopics.push({
+      name: el.textContent,
+      htmlId,
+    });
+  });
+
+  return {
+    htmlBody: dom.serialize(),
+    subtopics,
+  };
+};
+
 // @desc Update a draft
 // @route PUT /api/post/draft/:id
 // @access Private/Admin
 const updateDraftPost = asyncHandler(async (req, res) => {
   const { _id: userId } = req.user;
-  const { name, subtopics, tags, title, subtitle, body } = req.body;
+  const { name, tags, title, subtitle, body } = req.body;
   const draftPost = await DraftPost.findOne({
     _id: req.params.id,
     author: userId, //apenas o author poderá editar o post
@@ -73,11 +100,17 @@ const updateDraftPost = asyncHandler(async (req, res) => {
 
   if (draftPost) {
     draftPost.name = name;
-    draftPost.subtopics = subtopics;
     draftPost.tags = tags;
     draftPost.title = title;
     draftPost.subtitle = subtitle;
-    draftPost.body = body;
+
+    //parse dos subtopics
+    if (body) {
+      const { htmlBody, subtopics } = parseSubtopics(body);
+      draftPost.body = body;
+      draftPost.subtopics = subtopics;
+      draftPost.htmlBody = htmlBody;
+    }
 
     const updatedDraftPost = await draftPost.save();
     res.status(200).json(updatedDraftPost);
@@ -93,7 +126,10 @@ const updateDraftPost = asyncHandler(async (req, res) => {
 const deleteDraftPost = asyncHandler(async (req, res) => {
   const { _id: userId } = req.user;
   const { id } = req.params;
-  const post = await DraftPost.findOne({ _id: id, user: userId }); //apenas o author poderá apagar o post
+  const post = await DraftPost.findOne({
+    _id: id,
+    author: userId,
+  }); //apenas o author poderá apagar o post
 
   if (post) {
     await DraftPost.findByIdAndDelete(post._id);
