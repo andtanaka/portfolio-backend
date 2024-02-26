@@ -177,7 +177,6 @@ export {
   getDraftsPosts,
   createDraftPost,
   updateDraftPost,
-  updateTitleDraftPost,
   deleteDraftPost,
   getDraftPostById,
   getDraftPostByName,
