@@ -17,33 +17,50 @@ const getTags = asyncHandler(async (req, res) => {
     : {};
 
   const tags = await Tag.find({ ...keyword }).sort(
-    sort ? sortTags(sort) : { updatedAt: -1 }
+    sort ? sortTags(sort) : { updatedAt: 1 }
   );
 
-  res.json(tags);
+  res.json({ tags });
 });
 
 // @desc Create a tag
 // @route POST /api/tag
 // @access Private/Admin
 const createTag = asyncHandler(async (req, res) => {
-  const tag = new Tag({
-    name: req.body.name,
-  });
+  const { name } = req.body;
+  const nameExists = await Tag.findOne({ name });
 
-  const createdTag = await tag.save();
-  return res.status(201).json(createdTag);
+  if (nameExists) {
+    res.status(400);
+    throw new Error('Essa tag já existe');
+  } else {
+    const tag = new Tag({ name });
+
+    const createdTag = await tag.save();
+    return res.status(201).json(createdTag);
+  }
 });
 
 // @desc Update a tag
 // @route PUT /api/tag/:id
 // @access Private/Admin
 const updateTag = asyncHandler(async (req, res) => {
+  const { name } = req.body;
+  const nameExists = await Tag.findOne({ name });
   const tag = await Tag.findOne({
     _id: req.params.id,
   });
+
+  if (nameExists) {
+    if (nameExists._id.toString() !== draftPost._id.toString()) {
+      //se o nome existir e não for do mesmmo _id
+      res.status(400);
+      throw new Error('Essa tag já existe');
+    }
+  }
+
   if (tag) {
-    tag.name = req.body.name;
+    tag.name = name;
 
     const updatedTag = await tag.save();
     res.status(200).json(updatedTag);
