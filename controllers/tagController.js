@@ -52,7 +52,7 @@ const updateTag = asyncHandler(async (req, res) => {
   });
 
   if (nameExists) {
-    if (nameExists._id.toString() !== draftPost._id.toString()) {
+    if (nameExists._id.toString() !== tag._id.toString()) {
       //se o nome existir e não for do mesmmo _id
       res.status(400);
       throw new Error('Essa tag já existe');
