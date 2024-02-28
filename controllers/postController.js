@@ -2,6 +2,7 @@ import asyncHandler from '../middlewares/async-Handler.js';
 import sortPosts from '../utils/sortPosts.js';
 import Post from '../models/postModel.js';
 import DraftPost from '../models/draftPostModel.js';
+import tagsOptions from '../utils/tagsOptions.js';
 
 // @desc Fetch all posts                      //descrição
 // @route GET /api/post                      //rota

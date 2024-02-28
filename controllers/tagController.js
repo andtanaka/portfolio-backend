@@ -1,6 +1,7 @@
 import asyncHandler from '../middlewares/async-Handler.js';
 import Tag from '../models/tagModel.js';
 import sortTags from '../utils/sortTags.js';
+import tagsOptions from '../utils/tagsOptions.js';
 
 // @desc Fetch all tags                      //descrição
 // @route GET /api/tag                      //rota
@@ -19,8 +20,8 @@ const getTags = asyncHandler(async (req, res) => {
   const tags = await Tag.find({ ...keyword }).sort(
     sort ? sortTags(sort) : { updatedAt: 1 }
   );
-
-  res.json({ tags });
+  //tagsOptions: [...{value, label}]
+  res.json({ tags, tagsOptions: tagsOptions(tags) });
 });
 
 // @desc Create a tag

@@ -7,6 +7,7 @@ import { marked } from 'marked'; //markdown to html
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 import { v4 as uuidv4 } from 'uuid';
+import tagsOptions from '../utils/tagsOptions.js';
 
 // @desc Fetch all drafts                      //descrição
 // @route GET /api/post/draft                 //rota
@@ -30,7 +31,11 @@ const getDraftsPosts = asyncHandler(async (req, res) => {
     .sort(sort ? sortDraftsPosts(sort) : { updatedAt: -1 })
     .skip(pageSize * (page - 1))
     .limit(pageSize);
-  res.json({ draftPosts, page, pages: Math.ceil(count / pageSize) });
+  res.json({
+    draftPosts,
+    page,
+    pages: Math.ceil(count / pageSize),
+  });
 });
 
 // @desc Create a draft
@@ -85,7 +90,8 @@ const parseSubtopics = (body) => {
 // @access Private/Admin
 const updateDraftPost = asyncHandler(async (req, res) => {
   const { _id: userId } = req.user;
-  const { name, tags, title, subtitle, body } = req.body;
+  const { name, tags: tagsOptions, title, subtitle, body } = req.body;
+  const tags = [];
   const draftPost = await DraftPost.findOne({
     _id: req.params.id,
     author: userId, //apenas o author poderá editar o post
@@ -98,6 +104,13 @@ const updateDraftPost = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('Esse título já existe');
     }
+  }
+
+  console.log(tagsOptions);
+
+  if (tagsOptions.length) {
+    //transforma as tagsOptions em _ids para salvar em draftPost
+    tagsOptions.map((tag) => tags.push(tag.value));
   }
 
   if (draftPost) {
@@ -113,6 +126,7 @@ const updateDraftPost = asyncHandler(async (req, res) => {
       draftPost.subtopics = subtopics;
       draftPost.htmlBody = htmlBody;
     }
+    console.log(draftPost);
 
     const updatedDraftPost = await draftPost.save();
     res.status(200).json(updatedDraftPost);
@@ -150,7 +164,7 @@ const deleteDraftPost = asyncHandler(async (req, res) => {
 const getDraftPostById = asyncHandler(async (req, res) => {
   const post = await DraftPost.findById(req.params.id);
   if (post) {
-    return res.json(post);
+    return res.json({ post });
   } else {
     res.status(404);
     throw new Error('Resource not found');
@@ -161,9 +175,13 @@ const getDraftPostById = asyncHandler(async (req, res) => {
 // @route GET /api/post/draft/:name
 // @access Private/Admin
 const getDraftPostByName = asyncHandler(async (req, res) => {
-  const post = await DraftPost.findOne({ name: req.params.name });
+  const post = await DraftPost.findOne({ name: req.params.name }).populate({
+    path: 'tags',
+    select: ['_id', 'name'],
+  });
   if (post) {
-    return res.json(post);
+    // console.log(post);
+    return res.json({ post, tagsOptions: tagsOptions(post.tags) });
   } else {
     res.status(404);
     throw new Error('Resource not found');
