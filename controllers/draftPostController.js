@@ -96,6 +96,12 @@ const updateDraftPost = asyncHandler(async (req, res) => {
     _id: req.params.id,
     author: userId, //apenas o author poderá editar o post
   });
+
+  if (draftPost.posted) {
+    res.status(400);
+    throw new Error('Esse rascunho já foi postado');
+  }
+
   const nameExists = await DraftPost.findOne({ name });
 
   if (nameExists) {
@@ -105,8 +111,6 @@ const updateDraftPost = asyncHandler(async (req, res) => {
       throw new Error('Esse título já existe');
     }
   }
-
-  console.log(tagsOptions);
 
   if (tagsOptions.length) {
     //transforma as tagsOptions em _ids para salvar em draftPost
@@ -162,9 +166,12 @@ const deleteDraftPost = asyncHandler(async (req, res) => {
 // @route GET /api/post/draft/:id
 // @access Private/Admin
 const getDraftPostById = asyncHandler(async (req, res) => {
-  const post = await DraftPost.findById(req.params.id);
+  const post = await DraftPost.findById(req.params.id).populate({
+    path: 'tags',
+    select: ['_id', 'name'],
+  });
   if (post) {
-    return res.json({ post });
+    return res.json({ post, tagsOptions: tagsOptions(post.tags) });
   } else {
     res.status(404);
     throw new Error('Resource not found');

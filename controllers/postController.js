@@ -45,26 +45,27 @@ const getSomePosts = asyncHandler(async (req, res) => {
 // @access Private/Admin
 const createPost = asyncHandler(async (req, res) => {
   const { id } = req.body; //draft post's id
+  console.log(id);
+  const draftPost = await DraftPost.findById(id);
 
-  const draftPost = await DraftPost.findOne({
-    _id: id,
-  });
   if (draftPost) {
     const post = new Post({
       name: draftPost.name,
-      subtopics: draftPost.name,
+      subtopics: draftPost.subtopics,
       tags: draftPost.tags,
       title: draftPost.title,
       subtitle: draftPost.subtitle,
       body: draftPost.body,
+      htmlBody: draftPost.htmlBody,
       author: draftPost.author,
       postDate: new Date(),
     });
+    const createdPost = await post.save();
 
     draftPost.posted = true;
-
+    draftPost.postId = createdPost._id;
     await draftPost.save();
-    const createdPost = await post.save();
+
     return res.status(201).json(createdPost);
   } else {
     res.status(404);
@@ -117,9 +118,12 @@ const deletePost = asyncHandler(async (req, res) => {
 // @route GET /api/post/:id
 // @access Private/Admin
 const getPostById = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
+  const post = await Post.findById(req.params.id).populate({
+    path: 'tags',
+    select: ['_id', 'name'],
+  });
   if (post) {
-    return res.json(post);
+    return res.json({ post, tagsOptions: tagsOptions(post.tags) });
   } else {
     res.status(404);
     throw new Error('Resource not found');

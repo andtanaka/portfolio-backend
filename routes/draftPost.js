@@ -16,8 +16,6 @@ router
   .post(protect, admin, createDraftPost)
   .get(protect, admin, getDraftsPosts);
 
-router.get('/:name', protect, admin, getDraftPostByName);
-
 router
   .route('/:id')
   .get(protect, admin, getDraftPostById)
