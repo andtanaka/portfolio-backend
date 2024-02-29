@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import DraftPost from './draftPostModel.js';
 
 const postSchema = new mongoose.Schema(
   {
@@ -24,6 +25,20 @@ const postSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+postSchema.post('findOneAndDelete', async function (post) {
+  const draftPost = await DraftPost.findOne({ postId: post._id });
+  // Remove a associação do rascunho com o post removido
+  if (draftPost) {
+    await DraftPost.updateOne(
+      { postId: post._id },
+      {
+        posted: false,
+        postId: null,
+      }
+    );
+  }
+});
 
 const Post = mongoose.model('Post', postSchema);
 
