@@ -14,7 +14,7 @@ import {
 } from '../controllers/postController.js';
 
 router.route('/').post(protect, admin, createPost).get(getPosts);
-router.route('/all').get(protect, admin, getAllPosts);
+router.route('/all').get(protect, getAllPosts);
 
 router.get('/some', getSomePosts);
 
