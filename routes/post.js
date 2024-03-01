@@ -9,11 +9,16 @@ import {
   updatePost,
   deletePost,
   getPostById,
+  getAllPosts,
+  getPostByName,
 } from '../controllers/postController.js';
 
 router.route('/').post(protect, admin, createPost).get(getPosts);
+router.route('/all').get(protect, admin, getAllPosts);
 
 router.get('/some', getSomePosts);
+
+router.get('/name/:name', getPostByName);
 
 router
   .route('/:id')

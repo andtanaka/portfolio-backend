@@ -4,10 +4,47 @@ import Post from '../models/postModel.js';
 import DraftPost from '../models/draftPostModel.js';
 import tagsOptions from '../utils/tagsOptions.js';
 
-// @desc Fetch all posts                      //descrição
+// @desc Fetch published posts               //descrição
 // @route GET /api/post                      //rota
 // @access Public                            //acesso (Public, Private, Admin)
 const getPosts = asyncHandler(async (req, res) => {
+  const { text, sort, pageNumber } = req.query;
+  const pageSize = process.env.PAGINATION_LIMIT;
+  const page = Number(pageNumber) || 1; //página da url
+
+  //filtrar por: body text
+  //ordenar por: createdAt, UpdatedAt
+  const keyword = text
+    ? {
+        ...(text && { body: { $regex: text, $options: 'i' } }),
+        stop: false,
+      }
+    : { stop: false };
+
+  const count = await Post.countDocuments({ ...keyword }); //conta a quantidade de posts
+
+  const posts = await Post.find({ ...keyword })
+    .sort(sort ? sortPosts(sort) : { postDate: -1 })
+    .skip(pageSize * (page - 1))
+    .limit(pageSize);
+  res.json({ posts, page, pages: Math.ceil(count / pageSize) });
+});
+
+// @desc Fetch 3 latest published posts
+// @route GET /api/posts/last
+// @access Public
+const getSomePosts = asyncHandler(async (req, res) => {
+  const posts = await Post.find({ stop: false })
+    .sort(sort ? sortPosts(sort) : { postDate: -1 })
+    .limit(3);
+
+  res.json(posts);
+});
+
+// @desc Fetch all posts
+// @route GET /api/post/all
+// @access Private/admin
+const getAllPosts = asyncHandler(async (req, res) => {
   const { text, sort, pageNumber } = req.query;
   const pageSize = process.env.PAGINATION_LIMIT;
   const page = Number(pageNumber) || 1; //página da url
@@ -29,17 +66,6 @@ const getPosts = asyncHandler(async (req, res) => {
   res.json({ posts, page, pages: Math.ceil(count / pageSize) });
 });
 
-// @desc Fetch 3 latest posts
-// @route GET /api/posts/last
-// @access Public
-const getSomePosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find({})
-    .sort(sort ? sortPosts(sort) : { postDate: -1 })
-    .limit(3);
-
-  res.json(posts);
-});
-
 // @desc Create a post
 // @route POST /api/post
 // @access Private/Admin
@@ -50,14 +76,15 @@ const createPost = asyncHandler(async (req, res) => {
   if (draftPost) {
     const post = new Post({
       name: draftPost.name,
+      author: draftPost.author,
       subtopics: draftPost.subtopics,
       tags: draftPost.tags,
       title: draftPost.title,
       subtitle: draftPost.subtitle,
       body: draftPost.body,
       htmlBody: draftPost.htmlBody,
-      author: draftPost.author,
       postDate: new Date(),
+      stop: false,
     });
     const createdPost = await post.save();
 
@@ -74,10 +101,25 @@ const createPost = asyncHandler(async (req, res) => {
 // @route PUT /api/post/:id
 // @access Private/Admin
 const updatePost = asyncHandler(async (req, res) => {
-  const { name, subtopics, tags, title, subtitle, body } = req.body;
+  const {
+    name,
+    subtopics,
+    tags: tagsOptions,
+    title,
+    subtitle,
+    body,
+    stop,
+  } = req.body;
+  const tags = [];
   const post = await Post.findOne({
     _id: req.params.id,
   });
+
+  if (tagsOptions.length) {
+    //transforma as tagsOptions em _ids para salvar em draftPost
+    tagsOptions.map((tag) => tags.push(tag.value));
+  }
+
   if (post) {
     post.name = name;
     post.subtopics = subtopics;
@@ -85,6 +127,7 @@ const updatePost = asyncHandler(async (req, res) => {
     post.title = title;
     post.subtitle = subtitle;
     post.body = body;
+    post.stop = stop;
 
     const updatedPost = await post.save();
     res.status(200).json(updatedPost);
@@ -127,11 +170,29 @@ const getPostById = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc Fetch post by name
+// @route GET /api/post/name/:name
+// @access Public
+const getPostByName = asyncHandler(async (req, res) => {
+  const post = await Post.findOne({ name: req.params.name }).populate({
+    path: 'tags',
+    select: ['_id', 'name'],
+  });
+  if (post) {
+    return res.json({ post, tagsOptions: tagsOptions(post.tags) });
+  } else {
+    res.status(404);
+    throw new Error('Resource not found');
+  }
+});
+
 export {
   getPosts,
+  getAllPosts,
   getSomePosts,
   createPost,
   updatePost,
   deletePost,
   getPostById,
+  getPostByName,
 };
