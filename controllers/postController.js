@@ -3,6 +3,7 @@ import sortPosts from '../utils/sortPosts.js';
 import Post from '../models/postModel.js';
 import DraftPost from '../models/draftPostModel.js';
 import tagsOptions from '../utils/tagsOptions.js';
+import verifyNameExists from '../utils/verifyNameExists.js';
 
 // @desc Fetch published posts               //descrição
 // @route GET /api/post                      //rota
@@ -111,6 +112,13 @@ const updatePost = asyncHandler(async (req, res) => {
     stop,
   } = req.body;
   const tags = [];
+  const nameExists = await verifyNameExists(name, req.params.id);
+
+  if (nameExists.statusCode === 400) {
+    res.status(400);
+    throw new Error(nameExists.message);
+  }
+
   const post = await Post.findOne({
     _id: req.params.id,
   });

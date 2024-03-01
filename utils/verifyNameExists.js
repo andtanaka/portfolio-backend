@@ -16,13 +16,16 @@ const verifyNameExists = async (name, id = null) => {
   };
 
   if (id) {
-    const draftPost = await DraftPost.findOne({
-      _id: id,
-    });
     if (inDraftPosts) {
-      if (inDraftPosts._id.toString() !== draftPost._id.toString()) {
+      if (inDraftPosts._id.toString() !== id.toString()) {
         response.statusCode = 400;
         response.message = 'Já tem um rascunho com esse título';
+      }
+    }
+    if (inPosts) {
+      if (inPosts._id.toString() !== id.toString()) {
+        response.statusCode = 400;
+        response.message = 'Já tem um post com esse título';
       }
     }
   } else {
@@ -30,11 +33,10 @@ const verifyNameExists = async (name, id = null) => {
       response.statusCode = 400;
       response.message = 'Já tem um rascunho com esse título';
     }
-  }
-
-  if (inPosts) {
-    response.statusCode = 400;
-    response.message = 'Já tem um post com esse título';
+    if (inPosts) {
+      response.statusCode = 400;
+      response.message = 'Já tem um post com esse título';
+    }
   }
 
   return response;
