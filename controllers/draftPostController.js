@@ -1,13 +1,10 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 import asyncHandler from '../middlewares/async-Handler.js';
 import sortDraftsPosts from '../utils/sortDraftsPosts.js';
 import DraftPost from '../models/draftPostModel.js';
-import { marked } from 'marked'; //markdown to html
-const jsdom = require('jsdom');
-const { JSDOM } = jsdom;
-import { v4 as uuidv4 } from 'uuid';
 import tagsOptions from '../utils/tagsOptions.js';
+import Post from '../models/postModel.js';
+import verifyNameExists from '../utils/verifyNameExists.js';
+import parseSubtopics from '../utils/parseSubtopics.js';
 
 // @desc Fetch all drafts                      //descrição
 // @route GET /api/post/draft                 //rota
@@ -43,11 +40,11 @@ const getDraftsPosts = asyncHandler(async (req, res) => {
 // @access Private/Admin
 const createDraftPost = asyncHandler(async (req, res) => {
   const { name, subtopics, tags, title, subtitle, body } = req.body;
-  const nameExists = await DraftPost.findOne({ name });
+  const nameExists = await verifyNameExists(name);
 
-  if (nameExists) {
+  if (nameExists.statusCode === 400) {
     res.status(400);
-    throw new Error('Esse título já existe');
+    throw new Error(nameExists.message);
   }
 
   const draftPost = new DraftPost({
@@ -64,26 +61,35 @@ const createDraftPost = asyncHandler(async (req, res) => {
   return res.status(201).json(createdDraftPost);
 });
 
-const parseSubtopics = (body) => {
-  const subtopics = [];
-  const html = marked.parse(body);
-  const dom = new JSDOM(html);
+const createDraftPostFromPost = asyncHandler(async (req, res) => {
+  const { title, name } = req.body;
+  const nameExists = await verifyNameExists(name);
 
-  dom.window.document.querySelectorAll('h3').forEach((el) => {
-    const htmlId = uuidv4();
-    el.setAttribute('id', htmlId);
+  if (nameExists.statusCode === 400) {
+    res.status(400);
+    throw new Error(nameExists.message);
+  }
 
-    subtopics.push({
-      name: el.textContent,
-      htmlId,
+  const post = await Post.findById(req.params.id); //post id
+
+  if (post) {
+    const draftPost = new DraftPost({
+      name,
+      title,
+      subtopics: post.subtopics,
+      tags: post.tags,
+      subtitle: post.subtitle,
+      body: post.body,
+      author: req.user._id,
     });
-  });
 
-  return {
-    htmlBody: dom.serialize(),
-    subtopics,
-  };
-};
+    const createdDraftPost = await draftPost.save();
+    return res.status(201).json(createdDraftPost);
+  } else {
+    res.status(404);
+    throw new Error('Esse post não existe');
+  }
+});
 
 // @desc Update a draft
 // @route PUT /api/post/draft/:id
@@ -92,25 +98,17 @@ const updateDraftPost = asyncHandler(async (req, res) => {
   const { _id: userId } = req.user;
   const { name, tags: tagsOptions, title, subtitle, body } = req.body;
   const tags = [];
+  const nameExists = await verifyNameExists(name, req.params.id);
+
+  if (nameExists.statusCode === 400) {
+    res.status(400);
+    throw new Error(nameExists.message);
+  }
+
   const draftPost = await DraftPost.findOne({
     _id: req.params.id,
     author: userId, //apenas o author poderá editar o post
   });
-
-  if (draftPost.posted) {
-    res.status(400);
-    throw new Error('Esse rascunho já foi postado');
-  }
-
-  const nameExists = await DraftPost.findOne({ name });
-
-  if (nameExists) {
-    if (nameExists._id.toString() !== draftPost._id.toString()) {
-      //se o nome existir e não for do mesmmo _id
-      res.status(400);
-      throw new Error('Esse título já existe');
-    }
-  }
 
   if (tagsOptions.length) {
     //transforma as tagsOptions em _ids para salvar em draftPost
@@ -130,7 +128,6 @@ const updateDraftPost = asyncHandler(async (req, res) => {
       draftPost.subtopics = subtopics;
       draftPost.htmlBody = htmlBody;
     }
-    console.log(draftPost);
 
     const updatedDraftPost = await draftPost.save();
     res.status(200).json(updatedDraftPost);
@@ -146,13 +143,13 @@ const updateDraftPost = asyncHandler(async (req, res) => {
 const deleteDraftPost = asyncHandler(async (req, res) => {
   const { _id: userId } = req.user;
   const { id } = req.params;
-  const post = await DraftPost.findOne({
+  const draftpost = await DraftPost.findOne({
     _id: id,
     author: userId,
-  }); //apenas o author poderá apagar o post
+  }); //apenas o author poderá apagar o draftpost
 
-  if (post) {
-    await DraftPost.findByIdAndDelete(post._id);
+  if (draftpost) {
+    await DraftPost.findByIdAndDelete(draftpost._id);
     return res
       .status(200)
       .json({ message: `User's post (id: ${id}) was deleted.` });
@@ -198,6 +195,7 @@ const getDraftPostByName = asyncHandler(async (req, res) => {
 export {
   getDraftsPosts,
   createDraftPost,
+  createDraftPostFromPost,
   updateDraftPost,
   deleteDraftPost,
   getDraftPostById,

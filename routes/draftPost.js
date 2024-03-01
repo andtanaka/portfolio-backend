@@ -4,9 +4,9 @@ const router = express.Router();
 import { protect, admin } from '../middlewares/authMiddleware.js';
 import {
   createDraftPost,
+  createDraftPostFromPost,
   deleteDraftPost,
   getDraftPostById,
-  getDraftPostByName,
   getDraftsPosts,
   updateDraftPost,
 } from '../controllers/draftPostController.js';
@@ -18,6 +18,7 @@ router
 
 router
   .route('/:id')
+  .post(protect, admin, createDraftPostFromPost)
   .get(protect, admin, getDraftPostById)
   .delete(protect, admin, deleteDraftPost)
   .put(protect, admin, updateDraftPost);

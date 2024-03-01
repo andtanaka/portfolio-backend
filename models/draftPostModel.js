@@ -18,12 +18,6 @@ const draftPostSchema = new mongoose.Schema(
     subtitle: { type: String },
     body: { type: String },
     htmlBody: { type: String },
-    posted: { type: Boolean, default: false, required: true },
-    postId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Post',
-      default: null,
-    },
   },
   {
     timestamps: true,

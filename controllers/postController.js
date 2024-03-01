@@ -45,7 +45,6 @@ const getSomePosts = asyncHandler(async (req, res) => {
 // @access Private/Admin
 const createPost = asyncHandler(async (req, res) => {
   const { id } = req.body; //draft post's id
-  console.log(id);
   const draftPost = await DraftPost.findById(id);
 
   if (draftPost) {
@@ -62,9 +61,7 @@ const createPost = asyncHandler(async (req, res) => {
     });
     const createdPost = await post.save();
 
-    draftPost.posted = true;
-    draftPost.postId = createdPost._id;
-    await draftPost.save();
+    await DraftPost.findByIdAndDelete(draftPost._id);
 
     return res.status(201).json(createdPost);
   } else {
