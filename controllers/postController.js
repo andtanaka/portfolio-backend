@@ -4,6 +4,7 @@ import Post from '../models/postModel.js';
 import DraftPost from '../models/draftPostModel.js';
 import tagsOptions from '../utils/tagsOptions.js';
 import verifyNameExists from '../utils/verifyNameExists.js';
+import updateTagsCount from '../utils/updateTagsCount.js';
 
 // @desc Fetch published posts               //descrição
 // @route GET /api/post                      //rota
@@ -90,6 +91,8 @@ const createPost = asyncHandler(async (req, res) => {
     });
     const createdPost = await post.save();
 
+    updateTagsCount();
+
     await DraftPost.findByIdAndDelete(draftPost._id);
 
     return res.status(201).json(createdPost);
@@ -139,6 +142,9 @@ const updatePost = asyncHandler(async (req, res) => {
     post.stop = stop;
 
     const updatedPost = await post.save();
+
+    updateTagsCount();
+
     res.status(200).json(updatedPost);
   } else {
     res.status(404);
@@ -154,6 +160,8 @@ const deletePost = asyncHandler(async (req, res) => {
 
   if (post) {
     await Post.findByIdAndDelete(post._id);
+    updateTagsCount();
+
     return res
       .status(200)
       .json({ message: `User's post (id: ${post._id}) was deleted.` });
