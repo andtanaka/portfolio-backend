@@ -24,21 +24,21 @@ const draftPostSchema = new mongoose.Schema(
   }
 );
 
-draftPostSchema.post('save', function (error, doc, next) {
-  if (error.name === 'MongoServerError' && error.code === 11000) {
-    next(new Error('Esse título já existe.'));
-  } else {
-    next();
-  }
-});
+// draftPostSchema.post('save', function (error, doc, next) {
+//   if (error.name === 'MongoServerError' && error.code === 11000) {
+//     next(new Error('Esse título já existe.'));
+//   } else {
+//     next();
+//   }
+// });
 
-draftPostSchema.post('update', function (error, doc, next) {
-  if (error.name === 'MongoServerError' && error.code === 11000) {
-    next(new Error('Esse título já existe.'));
-  } else {
-    next();
-  }
-});
+// draftPostSchema.post('update', function (error, doc, next) {
+//   if (error.name === 'MongoServerError' && error.code === 11000) {
+//     next(new Error('Esse título já existe.'));
+//   } else {
+//     next();
+//   }
+// });
 
 const DraftPost = mongoose.model('DraftPost', draftPostSchema);
 

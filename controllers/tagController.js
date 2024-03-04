@@ -35,7 +35,7 @@ const createTag = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Essa tag já existe');
   } else {
-    const tag = new Tag({ name });
+    const tag = new Tag({ name, author: req.user._id });
 
     const createdTag = await tag.save();
     return res.status(201).json(createdTag);
@@ -46,11 +46,9 @@ const createTag = asyncHandler(async (req, res) => {
 // @route PUT /api/tag/:id
 // @access Private/Admin
 const updateTag = asyncHandler(async (req, res) => {
+  // const { _id: userId } = req.user;
   const { name } = req.body;
   const nameExists = await Tag.findOne({ name });
-  const tag = await Tag.findOne({
-    _id: req.params.id,
-  });
 
   if (nameExists) {
     if (nameExists._id.toString() !== tag._id.toString()) {
@@ -59,6 +57,11 @@ const updateTag = asyncHandler(async (req, res) => {
       throw new Error('Essa tag já existe');
     }
   }
+
+  const tag = await Tag.findOne({
+    _id: req.params.id,
+    // author: userId, //apenas o author poderá editar a tag
+  });
 
   if (tag) {
     tag.name = name;
@@ -75,7 +78,11 @@ const updateTag = asyncHandler(async (req, res) => {
 // @route DELETE /api/tag/:id
 // @access Private/Admin
 const deleteTag = asyncHandler(async (req, res) => {
-  const tag = await Tag.findOne({ _id: req.params.id });
+  // const { _id: userId } = req.user;
+  const tag = await Tag.findOne({
+    _id: req.params.id,
+    // author: userId, //apenas o author poderá apagar a tag
+  });
 
   if (tag) {
     await Tag.findByIdAndDelete(tag._id);

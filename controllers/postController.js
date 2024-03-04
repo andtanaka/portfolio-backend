@@ -1,5 +1,5 @@
 import asyncHandler from '../middlewares/async-Handler.js';
-import sortPosts from '../utils/sortPosts.js';
+import sortPosts, { sortAllPosts } from '../utils/sortPosts.js';
 import Post from '../models/postModel.js';
 import DraftPost from '../models/draftPostModel.js';
 import tagsOptions from '../utils/tagsOptions.js';
@@ -46,22 +46,23 @@ const getSomePosts = asyncHandler(async (req, res) => {
 // @route GET /api/post/all
 // @access Private/admin
 const getAllPosts = asyncHandler(async (req, res) => {
-  const { text, sort, pageNumber } = req.query;
+  const { text, stop, sort, pageNumber } = req.query;
   const pageSize = process.env.PAGINATION_LIMIT;
   const page = Number(pageNumber) || 1; //página da url
 
-  //filtrar por: body text
+  //filtrar por: body text, stop (se o blog está publicado)
   //ordenar por: createdAt, UpdatedAt
   const keyword = text
     ? {
         ...(text && { body: { $regex: text, $options: 'i' } }),
+        ...(stop && { stop }),
       }
     : {};
 
   const count = await Post.countDocuments({ ...keyword }); //conta a quantidade de posts
 
   const posts = await Post.find({ ...keyword })
-    .sort(sort ? sortPosts(sort) : { postDate: -1 })
+    .sort(sort ? sortAllPosts(sort) : { stop: 1, postDate: -1 })
     .skip(pageSize * (page - 1))
     .limit(pageSize);
   res.json({ posts, page, pages: Math.ceil(count / pageSize) });

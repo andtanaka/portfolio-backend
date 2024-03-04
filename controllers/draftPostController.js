@@ -61,6 +61,9 @@ const createDraftPost = asyncHandler(async (req, res) => {
   return res.status(201).json(createdDraftPost);
 });
 
+// @desc Create a draftpost from a post
+// @route POST /api/post/draft/:id
+// @access Private/Admin
 const createDraftPostFromPost = asyncHandler(async (req, res) => {
   const { title, name } = req.body;
   const nameExists = await verifyNameExists(name);

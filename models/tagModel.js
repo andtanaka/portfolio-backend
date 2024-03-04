@@ -6,6 +6,10 @@ const tagSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
     count: { type: Number, default: 0 },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,
