@@ -18,7 +18,19 @@ const getDraftsPosts = asyncHandler(async (req, res) => {
   //ordenar por: createdAt, UpdatedAt
   const keyword = text
     ? {
-        ...(text && { body: { $regex: text, $options: 'i' } }),
+        ...(text && {
+          $or: [
+            {
+              body: { $regex: text, $options: 'i' },
+            },
+            {
+              title: { $regex: text, $options: 'i' },
+            },
+            {
+              subtitle: { $regex: text, $options: 'i' },
+            },
+          ],
+        }),
       }
     : {};
 

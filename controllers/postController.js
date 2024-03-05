@@ -5,23 +5,39 @@ import DraftPost from '../models/draftPostModel.js';
 import tagsOptions from '../utils/tagsOptions.js';
 import verifyNameExists from '../utils/verifyNameExists.js';
 import updateTagsCount from '../utils/updateTagsCount.js';
+import Tag from '../models/tagModel.js';
 
 // @desc Fetch published posts               //descrição
 // @route GET /api/post                      //rota
 // @access Public                            //acesso (Public, Private, Admin)
 const getPosts = asyncHandler(async (req, res) => {
-  const { text, sort, pageNumber } = req.query;
+  const { text, tag: tagName, sort, pageNumber } = req.query;
   const pageSize = process.env.PAGINATION_LIMIT;
   const page = Number(pageNumber) || 1; //página da url
+  const tag = (await Tag.findOne({ name: tagName })) || '';
 
-  //filtrar por: body text
+  //filtrar por: text em body, title e subtitle; name da tag
   //ordenar por: createdAt, UpdatedAt
-  const keyword = text
-    ? {
-        ...(text && { body: { $regex: text, $options: 'i' } }),
-        stop: false,
-      }
-    : { stop: false };
+  const keyword =
+    text || tag
+      ? {
+          ...(text && {
+            $or: [
+              {
+                body: { $regex: text, $options: 'i' },
+              },
+              {
+                title: { $regex: text, $options: 'i' },
+              },
+              {
+                subtitle: { $regex: text, $options: 'i' },
+              },
+            ],
+          }),
+          ...(tag && { tags: tag }),
+          stop: false,
+        }
+      : { stop: false };
 
   const count = await Post.countDocuments({ ...keyword }); //conta a quantidade de posts
 
@@ -37,28 +53,43 @@ const getPosts = asyncHandler(async (req, res) => {
 // @access Public
 const getSomePosts = asyncHandler(async (req, res) => {
   const posts = await Post.find({ stop: false })
-    .sort(sort ? sortPosts(sort) : { postDate: -1 })
+    .sort({ postDate: -1 })
     .limit(3);
 
-  res.json(posts);
+  res.json({ posts });
 });
 
 // @desc Fetch all posts
 // @route GET /api/post/all
 // @access Private/admin
 const getAllPosts = asyncHandler(async (req, res) => {
-  const { text, stop, sort, pageNumber } = req.query;
+  const { text, stop, tag: tagName, sort, pageNumber } = req.query;
   const pageSize = process.env.PAGINATION_LIMIT;
   const page = Number(pageNumber) || 1; //página da url
+  const tag = tagName ? (await Tag.findOne({ name: tagName })) || '' : '';
 
-  //filtrar por: body text, stop (se o blog está publicado)
+  //filtrar por: text em body, title e subtitle; name da tag; stop (se o blog está publicado)
   //ordenar por: createdAt, UpdatedAt
-  const keyword = text
-    ? {
-        ...(text && { body: { $regex: text, $options: 'i' } }),
-        ...(stop && { stop }),
-      }
-    : {};
+  const keyword =
+    text || tag
+      ? {
+          ...(text && {
+            $or: [
+              {
+                body: { $regex: text, $options: 'i' },
+              },
+              {
+                title: { $regex: text, $options: 'i' },
+              },
+              {
+                subtitle: { $regex: text, $options: 'i' },
+              },
+            ],
+          }),
+          ...(tag && { tags: tag }),
+          ...(stop && { stop }),
+        }
+      : {};
 
   const count = await Post.countDocuments({ ...keyword }); //conta a quantidade de posts
 
