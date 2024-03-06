@@ -18,7 +18,7 @@ const getTags = asyncHandler(async (req, res) => {
     : {};
 
   const tags = await Tag.find({ ...keyword }).sort(
-    sort ? sortTags(sort) : { updatedAt: 1 }
+    sort ? sortTags(sort) : { count: -1, updatedAt: -1 }
   );
   //tagsOptions: [...{value, label}]
   res.json({ tags, tagsOptions: tagsOptions(tags) });

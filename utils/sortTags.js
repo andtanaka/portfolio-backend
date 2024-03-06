@@ -1,6 +1,6 @@
 const sortOptions = {
-  'earliest-first': { updatedAt: 1 },
-  'latest-first': { updatedAt: -1 },
+  'earliest-first': { updatedAt: -1 },
+  'latest-first': { updatedAt: 1 },
 };
 
 const sortTags = (typeSort) => {
