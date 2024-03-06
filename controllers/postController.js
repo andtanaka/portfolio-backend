@@ -6,6 +6,7 @@ import tagsOptions from '../utils/tagsOptions.js';
 import verifyNameExists from '../utils/verifyNameExists.js';
 import updateTagsCount from '../utils/updateTagsCount.js';
 import Tag from '../models/tagModel.js';
+import parseSubtopics from '../utils/parseSubtopics.js';
 
 // @desc Fetch published posts               //descrição
 // @route GET /api/post                      //rota
@@ -165,12 +166,18 @@ const updatePost = asyncHandler(async (req, res) => {
 
   if (post) {
     post.name = name;
-    post.subtopics = subtopics;
     post.tags = tags;
     post.title = title;
     post.subtitle = subtitle;
-    post.body = body;
     post.stop = stop;
+
+    //parse dos subtopics
+    if (body) {
+      const { htmlBody, subtopics } = parseSubtopics(body);
+      post.body = body;
+      post.subtopics = subtopics;
+      post.htmlBody = htmlBody;
+    }
 
     const updatedPost = await post.save();
 
