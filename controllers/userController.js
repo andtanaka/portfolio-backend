@@ -1,6 +1,7 @@
 import asyncHandler from '../middlewares/async-Handler.js';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
+import sgMail from '@sendgrid/mail';
 
 // @desc Auth user & get token        //descrição
 // @route POST /api/user/login        /rota
@@ -227,5 +228,37 @@ export const updateUser = asyncHandler(async (req, res) => {
   } else {
     res.status(404);
     throw new Error('Usuário não encontrado');
+  }
+});
+
+function getMessage(name, email, message) {
+  const body = `email: ${email}. message: ${message}`;
+  return {
+    to: process.env.EMAIL_TO_RECEIVE,
+    from: process.env.EMAIL_TO_SEND,
+    subject: `Email from ${name} of my portfolio page`,
+    text: body,
+    // html: `<strong>${body}</strong>`,
+  };
+}
+
+// @desc Send a email
+// @route POST /api/user/sendemail
+// @access Public
+export const sendEmailAPI = asyncHandler(async (req, res) => {
+  const { name, email, message } = req.body;
+  process.env.SENDGRID_API_KEY &&
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+  try {
+    await sgMail.send(getMessage(name, email, message));
+    res.status(200).json({
+      message: `Obrigada ${name} por sua mensagem! O email foi enviado com sucesso`,
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error(
+      'Erro ao enviar sua mensagem. Tente mais tarde ou utilize as minhas redes sociais.'
+    );
   }
 });

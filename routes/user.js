@@ -12,6 +12,7 @@ import {
   updateUser,
   deleteProfile,
   updateUserPassword,
+  sendEmailAPI,
 } from '../controllers/userController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
@@ -19,6 +20,8 @@ router.route('/').post(registerUser).get(protect, admin, getUsers);
 
 router.post('/login', authUser);
 router.post('/logout', protect, logoutUser);
+
+router.post('/sendemail', sendEmailAPI);
 
 router
   .route('/profile')
