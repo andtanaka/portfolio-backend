@@ -32,7 +32,7 @@ app.use(cookieParser());
 
 const corsOptions = {
   origin: [
-    'https://portfolio-mn3q.onrender.com',
+    'https://portfolio-34oc.onrender.com',
     'https://portfolio-blog-admin.onrender.com',
   ],
   methods: 'GET,PUT,POST,DELETE',
