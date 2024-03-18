@@ -1,9 +1,11 @@
-import express from 'express';
 import dotenv from 'dotenv';
+if (process.env.NODE_ENV !== 'production') {
+  //quando NODE_ENV = development, usamos o arquivo .env na nossa aplicação
+  dotenv.config();
+}
+
+import express from 'express';
 import cookieParser from 'cookie-parser';
-
-dotenv.config();
-
 import connectDB from './config/db.js';
 import userRoutes from './routes/user.js';
 import draftPostRoutes from './routes/draftPost.js';
