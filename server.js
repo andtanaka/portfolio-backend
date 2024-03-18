@@ -1,7 +1,8 @@
-import dotenv from 'dotenv';
 if (process.env.NODE_ENV !== 'production') {
   //quando NODE_ENV = development, usamos o arquivo .env na nossa aplicação
-  dotenv.config();
+  import('dotenv').then((dotenv) => {
+    dotenv.config();
+  });
 }
 
 import express from 'express';
