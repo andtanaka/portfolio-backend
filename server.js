@@ -5,6 +5,9 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
@@ -13,6 +16,8 @@ import draftPostRoutes from './routes/draftPost.js';
 import postRoutes from './routes/post.js';
 import tagRoutes from './routes/tag.js';
 import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
+
+const cors = require('cors');
 
 const port = process.env.PORT || 5001;
 
@@ -26,6 +31,26 @@ app.use(express.urlencoded({ extended: true }));
 
 //Cookie parser middleware
 app.use(cookieParser());
+
+const whitelist = [
+  'https://portfolio-mn3q.onrender.com',
+  'https://portfolio-blog-admin.onrender.com',
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET,PUT,POST,DELETE',
+  allowedHeaders: 'Content-Type, *',
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 app.use('/api/user', userRoutes);
 app.use('/api/post/draft', draftPostRoutes);
