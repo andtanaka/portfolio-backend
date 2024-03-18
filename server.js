@@ -1,12 +1,10 @@
-if (process.env.NODE_ENV !== 'production') {
-  //quando NODE_ENV = development, usamos o arquivo .env na nossa aplicação
-  import('dotenv').then((dotenv) => {
-    dotenv.config();
-  });
-}
-
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+
+if (process.env.NODE_ENV !== 'production') {
+  //quando NODE_ENV = development, usamos o arquivo .env na nossa aplicação
+  require('dotenv').config();
+}
 
 import express from 'express';
 import cookieParser from 'cookie-parser';
@@ -32,19 +30,11 @@ app.use(express.urlencoded({ extended: true }));
 //Cookie parser middleware
 app.use(cookieParser());
 
-const whitelist = [
-  'https://portfolio-mn3q.onrender.com',
-  'https://portfolio-blog-admin.onrender.com',
-];
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'https://portfolio-mn3q.onrender.com',
+    'https://portfolio-blog-admin.onrender.com',
+  ],
   methods: 'GET,PUT,POST,DELETE',
   allowedHeaders: 'Content-Type, *',
   optionsSuccessStatus: 200,
