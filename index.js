@@ -32,8 +32,7 @@ app.use(cookieParser());
 
 const corsOptions = {
   origin: [
-    'https://portfolio-plak.onrender.com',
-    'https://portfolio-blog-admin.onrender.com',
+    'https://portfolio-amtanaka.vercel.app',
     'https://portfolio-blog-admin.vercel.app',
   ],
   methods: 'GET,PUT,POST,DELETE',
@@ -42,6 +41,10 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
+
+app.get('/', (req, res) => {
+  return res.status(200).json('Welcome, the app is working well');
+});
 
 app.use('/api/user', userRoutes);
 app.use('/api/post/draft', draftPostRoutes);
