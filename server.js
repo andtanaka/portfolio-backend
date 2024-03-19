@@ -34,6 +34,7 @@ const corsOptions = {
   origin: [
     'https://portfolio-plak.onrender.com',
     'https://portfolio-blog-admin.onrender.com',
+    'https://portfolio-blog-admin.vercel.app',
   ],
   methods: 'GET,PUT,POST,DELETE',
   allowedHeaders: 'Content-Type, *',
